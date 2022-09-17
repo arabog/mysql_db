@@ -1,0 +1,42 @@
+WSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+  myUsername:
+    Description: Any username
+    Type: String
+
+  myPassword:
+    Description: A password with at least 8 characters
+    Type: String
+
+
+Resources:
+  MySQLDBSubnetGrp:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+    DBSubnetGroupDescription: "Subnets to use for the DB"
+    DBSubnetGroupName: "Subnet Group"
+    SubnetIds:
+
+
+  MySQLDB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      VPCSecurityGroups:
+      PubliclyAccessible: false
+      MultiAZ: false
+      AllocatedStorage: 20
+      DBInstanceClass: db.t2.small
+      Engine: "mysql"
+      MasterUsername: !Sub "${myUsername}"
+      MasterUserPassword: !Sub "${myPassword}"
+      DBSubnetGroupName: !Ref MySQLDBSubnetGrp
+      Tags:
+        Key: "Name"
+        Value: !Sub "${EnvironmentName} MySQL RDS"
+    DeletionPolicy: "Retain"
+    
+

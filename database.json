@@ -1,0 +1,16 @@
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "db-storage"
+    },
+
+    {
+        "ParameterKey": "myUsername",
+        "ParameterValue": "admin"
+    },
+
+    {
+        "ParameterKey": "myPassword",
+        "ParameterValue": "abcd1234"
+    }
+]

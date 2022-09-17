@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template deploys a VPC and EC2 Instance
+
+Parameters:
+  EnvironmentName:
+    Description: A Vpc and a EC2
+    Type: String
+
+  AMItoUse: 
+    Description: AMI to use for the base image
+    Type: String
+
+Resources:
+  # Amazon Linux EC2 Section
+  SecGrp:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Allow http to our host
+      VpcId: 
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 0
+          CidrIp: 0.0.0.0/0
+
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} SecGrp
+          
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref AMItoUse
+      # KeyName: unababs
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: SecGrp
+        SubnetId:
+          Fn::ImportValue: !Sub "${EnvironmentName}-PubSID"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install -y httpd
+          sudo systemctl start httpd
+
+      Tags: 
+      - Key: Name 
+        Value: !Sub ${EnvironmentName} Instance

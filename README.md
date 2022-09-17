@@ -1,4 +1,4 @@
-# MySQL Databas
+# MySQL Database
 Create a CloudFormation script that deploys a MySQL DB with an associated security group.  
 
 ## Bonus Steps

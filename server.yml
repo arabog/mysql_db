@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This template deploys a VPC and EC2 Instance
+Description: This template deploys an Ubuntu EC2 Instance
 
 Parameters:
   EnvironmentName:
-    Description: A Vpc and a EC2
+    Description: An EC2 Environment Name
     Type: String
 
   AMItoUse: 
@@ -12,7 +12,7 @@ Parameters:
 
 Resources:
   # Amazon Linux EC2 Section
-  SecGrp:
+  PublicServerSecGrp:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: Allow http to our host
@@ -37,21 +37,48 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags: 
         - Key: Name 
-          Value: !Sub ${EnvironmentName} SecGrp
+          Value: !Sub ${EnvironmentName} PubServer SecGrp
+
+  PrivateServerSecGrp:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Allow http to our host
+      VpcId: 
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} PriServer SecGrp
           
-  Instance:
+  PublicInstance1:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
       ImageId: !Ref AMItoUse
-      # KeyName: unababs
+      KeyName: babs
       NetworkInterfaces: 
       - AssociatePublicIpAddress: "true"
         DeviceIndex: "0"
         GroupSet: 
-          - Ref: SecGrp
+          - Ref: PublicServerSecGrp
         SubnetId:
-          Fn::ImportValue: !Sub "${EnvironmentName}-PubSID"
+          Fn::ImportValue: !Sub "${EnvironmentName}-PUB-SN1"
 
       UserData:
         Fn::Base64: !Sub |
@@ -62,4 +89,117 @@ Resources:
 
       Tags: 
       - Key: Name 
-        Value: !Sub ${EnvironmentName} Instance
+        Value: !Sub ${EnvironmentName} Public Instance1
+
+  PublicInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref AMItoUse
+      KeyName: babs
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: PublicServerSecGrp
+        SubnetId:
+          Fn::ImportValue: !Sub "${EnvironmentName}-PUB-SN2"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install -y httpd
+          sudo systemctl start httpd
+
+      Tags: 
+      - Key: Name 
+        Value: !Sub ${EnvironmentName} Public Instance2
+
+  PrivateInstance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref AMItoUse
+      KeyName: babs
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: PrivateServerSecGrp
+        SubnetId:
+          Fn::ImportValue: !Sub "${EnvironmentName}-PRI-SN1"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install -y httpd
+          sudo systemctl start httpd
+
+      Tags: 
+      - Key: Name 
+        Value: !Sub ${EnvironmentName} Private Instance1
+
+  PrivateInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref AMItoUse
+      KeyName: babs
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: PrivateServerSecGrp
+        SubnetId:
+          Fn::ImportValue: !Sub "${EnvironmentName}-PRI-SN2"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install -y httpd
+          sudo systemctl start httpd
+
+      Tags: 
+      - Key: Name 
+        Value: !Sub ${EnvironmentName} Private Instance2
+
+
+Outputs:
+  PublicServerSecGrp:
+    Description: A reference to the created PublicServerSecGrp
+    Value: !Ref PublicServerSecGrp
+    Export:
+      Name: !Sub ${EnvironmentName}-PublicServerSecGrp
+
+  PrivateServerSecGrp:
+    Description: A reference to the created PrivateServerSecGrp
+    Value: !Ref PrivateServerSecGrp
+    Export:
+      Name: !Sub ${EnvironmentName}-PrivateServerSecGrp
+
+  PublicInstance1:
+    Description: A reference to the created PublicInstance1
+    Value: !Ref PublicInstance1
+    Export:
+      Name: !Sub ${EnvironmentName}-PublicInstance1
+
+  PublicInstance2:
+    Description: A reference to the created PublicInstance2
+    Value: !Ref PublicInstance2
+    Export:
+      Name: !Sub ${EnvironmentName}-PublicInstance2
+
+  PrivateInstance1:
+    Description: A reference to the created PrivateInstance1
+    Value: !Ref PrivateInstance1
+    Export:
+      Name: !Sub ${EnvironmentName}-PrivateInstance1
+
+  PrivateInstance2:
+    Description: A reference to the created PrivateInstance2
+    Value: !Ref PrivateInstance2
+    Export:
+      Name: !Sub ${EnvironmentName}-PrivateInstance2

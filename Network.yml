@@ -1,3 +1,4 @@
+AWSTemplateFormatVersion: 2010-09-09
 Description:
   Network Infrastructure For Deployment of Instances and MySQL Databases
 
@@ -216,7 +217,7 @@ Outputs:
     Export:
       Name: !Sub ${EnvironmentName}-PUB-SN2
 
-  PrivateSubnet2:
+  PrivateSubnet1:
     Description: A reference to the created PrivateSubnet
     Value: !Ref PrivateSubnet2
     Export:

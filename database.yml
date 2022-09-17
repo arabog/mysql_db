@@ -1,4 +1,7 @@
-WSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
+Description:
+    A MySQL Database using IAC.
+
 Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
@@ -17,16 +20,19 @@ Resources:
   MySQLDBSubnetGrp:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
-    DBSubnetGroupDescription: "Subnets to use for the DB"
-    DBSubnetGroupName: "Subnet Group"
-    SubnetIds:
+      DBSubnetGroupDescription: "Subnets to use for the DB"
+      DBSubnetGroupName: "Subnet Group"
+      SubnetIds:
+      # Replace these IDs, as applicable to you
+      - subnet-0ae5b75d2fad14c56
+      - subnet-0823d131a78ed0adf
 
-
-  MySQLDB:
+  MySQLDB1:
     Type: "AWS::RDS::DBInstance"
     Properties:
-      VPCSecurityGroups:
-      PubliclyAccessible: false
+      VPCSecurityGroups: [sg-0b17df7c93f35936f]
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      PubliclyAccessible: true
       MultiAZ: false
       AllocatedStorage: 20
       DBInstanceClass: db.t2.small
@@ -35,8 +41,36 @@ Resources:
       MasterUserPassword: !Sub "${myPassword}"
       DBSubnetGroupName: !Ref MySQLDBSubnetGrp
       Tags:
-        Key: "Name"
-        Value: !Sub "${EnvironmentName} MySQL RDS"
+        - 
+          Key: "Name"
+          Value: !Sub "${EnvironmentName} MySQL RDS1"
     DeletionPolicy: "Retain"
-    
 
+  MySQLDB2:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      VPCSecurityGroups: [sg-0b17df7c93f35936f]
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      PubliclyAccessible: true
+      MultiAZ: false
+      AllocatedStorage: 20
+      DBInstanceClass: db.t2.small
+      Engine: "mysql"
+      MasterUsername: !Sub "${myUsername}"
+      MasterUserPassword: !Sub "${myPassword}"
+      DBSubnetGroupName: !Ref MySQLDBSubnetGrp 
+      Tags:
+        - 
+          Key: "Name"
+          Value: !Sub "${EnvironmentName} MySQL RDS2"
+    DeletionPolicy: "Retain"
+
+
+Outputs:
+  MySQLDB1:
+    Description: InstanceId of the newly created MySQL RDS Instance1
+    Value: !Ref MySQLDB1
+
+  MySQLDB2:
+    Description: InstanceId of the newly created MySQL RDS Instance2
+    Value: !Ref MySQLDB2
